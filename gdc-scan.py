@@ -215,9 +215,10 @@ def file_download(args):
 
 def file_facets(args):
     result = facets(FILES, args.attribute, legacy=args.legacy)
-    for key in result:
-        print(key)
-        pprint(result[key])
+    print(json.dumps(result))
+    # for key in result:
+    #     print(key)
+    #     pprint(result[key])
 
 def mapping(endpoint, args):
     response = gdc_request(os.path.join(endpoint, '_mapping'))['fields']

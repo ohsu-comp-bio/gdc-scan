@@ -1,0 +1,14 @@
+---
+- hosts: gdc
+  remote_user: ubuntu
+  tasks:
+    - name: installing dependencies from apt
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      become: true
+      with_items:
+        - tree
+        - python
+        - python-pip
