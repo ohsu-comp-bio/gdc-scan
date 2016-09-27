@@ -1,6 +1,6 @@
 # gdc-scan
 
-This utility aims to provide a programmatic interface to the (GDC API)[https://gdc.cancer.gov/developers/gdc-application-programming-interface-api].
+This utility aims to provide a programmatic interface to the [GDC API](https://gdc.cancer.gov/developers/gdc-application-programming-interface-api).
 
 ## usage
 
