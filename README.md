@@ -1,5 +1,7 @@
 # gdc-scan
 
+![GDC](https://github.com/ohsu-computational-bio/gdc-scan/blob/master/resources/public/scan.png)
+
 This utility aims to provide a programmatic interface to the [GDC API](https://gdc.cancer.gov/developers/gdc-application-programming-interface-api).
 
 ## usage
