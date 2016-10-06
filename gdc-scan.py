@@ -52,28 +52,32 @@ def gdc_request(endpoint, params={}, legacy=False):
     if 'fields' in all_params:
         all_params['fields'] = ','.join(all_params['fields'])
 
+    # print(url + str(all_params))
     request = requests.get(url, params=all_params)
     return request.json()
 
 def gdc_paginate(endpoint, params={}, legacy=False, key='hits'):
     response = gdc_request(endpoint, params=params, legacy=legacy)
-    data = response['data']
-    for h in data[key]:
-        if isinstance(data[key], list):
-            yield h
-        else:
-            yield (h, data[key][h])
-
-    while not 'size' in params and 'pagination' in data and data['pagination']['size'] > 0 and data['pagination']['page'] < data['pagination']['pages']:
-        params['from'] = data['pagination']['from'] + data['pagination']['count']
-        response = gdc_request(endpoint, params=params, legacy=legacy)
+    if 'data' in response:
         data = response['data']
-
         for h in data[key]:
             if isinstance(data[key], list):
                 yield h
             else:
                 yield (h, data[key][h])
+
+        while not 'size' in params and 'pagination' in data and data['pagination']['size'] > 0 and data['pagination']['page'] < data['pagination']['pages']:
+            params['from'] = data['pagination']['from'] + data['pagination']['count']
+            response = gdc_request(endpoint, params=params, legacy=legacy)
+            data = response['data']
+
+            for h in data[key]:
+                if isinstance(data[key], list):
+                    yield h
+                else:
+                    yield (h, data[key][h])
+    elif 'message' in response:
+        print(response['message'])
     
 def build_conditions(args):
     conditions = [{'in': {'files.access': ['open']}}]
@@ -91,20 +95,32 @@ def facets(endpoint, field, legacy=False):
     result = {}
     params = {'facets': field, 'size': 0}
     response = gdc_request(endpoint, params=params, legacy=legacy)
-    aggregations = response['data']['aggregations']
+    data = response['data']
+    if 'aggregations' in data:
+        aggregations = response['data']['aggregations']
 
-    for key in aggregations:
-        result[key] = {}
-        for value in aggregations[key]['buckets']:
-            result[key][value['key']] = value['doc_count']
+        for key in aggregations:
+            result[key] = {}
+            for value in aggregations[key]['buckets']:
+                result[key][value['key']] = value['doc_count']
 
-    return result
+        return result
+    elif 'hits' in data:
+        print(data['hits'][0].keys())
 
 def project_list(args):
     for a in gdc_paginate(PROJECTS, legacy=args.legacy):
         print(a['project_id'])
 
 CASE_FIELDS = [
+    'project.name',
+    'project.project_id',
+    'project.primary_site',
+    'submitter_id',
+    'submitter_sample_ids'
+]
+
+CASE_EXPANSIONS = [
     'annotations',
     'demographic',
     'family_histories',
@@ -132,10 +148,10 @@ CASE_FILE_FIELDS = [
         
 def case_list(args):
     if args.id:
-        case = gdc_request(os.path.join(CASES, args.id), params={'expand': CASE_FIELDS}, legacy=args.legacy)
+        case = gdc_request(os.path.join(CASES, args.id), params={'expand': CASE_EXPANSIONS}, legacy=args.legacy)
         print(pformat(case))
     else:
-        for case in gdc_paginate(CASES, params={'expand': CASE_FIELDS}, legacy=args.legacy):
+        for case in gdc_paginate(CASES, params={'fields': CASE_FIELDS}, legacy=args.legacy):
             print json.dumps(case)
 
 def select_keys(m, keys):
@@ -213,6 +229,10 @@ def file_download(args):
     else:
         process_files(args, process=lambda f: download_recent(f['file_name'], f['file_id'], legacy=args.legacy))
 
+def case_facets(args):
+    result = facets(CASES, args.attribute, legacy=args.legacy)
+    print(json.dumps(result))
+
 def file_facets(args):
     result = facets(FILES, args.attribute, legacy=args.legacy)
     print(json.dumps(result))
@@ -241,6 +261,11 @@ METHODS = {
                 ['--id', {'type': str}],
                 ['--project', {'type': str}]
             ]
+        },
+
+        'facets' : {
+            'func' : case_facets,
+            'args' : ['attribute']
         },
 
         'files': {
