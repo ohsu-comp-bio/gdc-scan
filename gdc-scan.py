@@ -219,8 +219,10 @@ def file_list(args):
         print(pformat(file))
     else:
         # process_files(args, process=lambda m: pprint([m['file_name'], m['file_id']]))
+        key = args.key if args.key else 'file_name'
+        parts = key.split(',')
         files = process_files(args)
-        pared = map(lambda file: file['file_name'], files)
+        pared = map(lambda file: select_keys(file, parts), files)
         print(json.dumps(pared))
 
 def file_download(args):
@@ -286,7 +288,8 @@ METHODS = {
                 ['--id', {'type': str}],
                 ['--project', {'type': str}],
                 ['--size', {'type': int}],
-                ['--type', {'type': str}]
+                ['--type', {'type': str}],
+                ['--key', {'type': str}]
             ]
         },
 
