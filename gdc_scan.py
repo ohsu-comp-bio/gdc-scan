@@ -6,8 +6,10 @@ import argparse
 import requests
 from pprint import pformat, pprint
 
-URL_BASE="https://gdc-api.nci.nih.gov/v0/"
-LEGACY_BASE="https://gdc-api.nci.nih.gov/v0/legacy/"
+URL_BASE="https://gdc-api.nci.nih.gov/"
+LEGACY_BASE="https://gdc-api.nci.nih.gov/legacy/"
+# URL_BASE="https://gdc-api.nci.nih.gov/v0/"
+# LEGACY_BASE="https://gdc-api.nci.nih.gov/v0/legacy/"
 
 PROJECTS="projects"
 FILES="files"
@@ -44,7 +46,7 @@ def expand_filter(d):
 def gdc_request(endpoint, params={}, legacy=False):
     base = (LEGACY_BASE if legacy else URL_BASE)
     url = base + endpoint
-    default = {'size': 1000, 'expand': []}
+    default = {'size': 100, 'expand': []}
     all_params = merge(default, params)
     all_params['expand'] = ','.join(all_params['expand'])
     if 'filters' in all_params:
@@ -52,7 +54,8 @@ def gdc_request(endpoint, params={}, legacy=False):
     if 'fields' in all_params:
         all_params['fields'] = ','.join(all_params['fields'])
 
-    # print(url + str(all_params))
+    print(url)
+    print(str(all_params))
     request = requests.get(url, params=all_params)
     return request.json()
 
@@ -77,6 +80,8 @@ def gdc_paginate(endpoint, params={}, legacy=False, key='hits'):
                 else:
                     yield (h, data[key][h])
     elif 'message' in response:
+        print('failure')
+        print(response.keys())
         print(response['message'])
     
 def build_conditions(args):
@@ -167,6 +172,7 @@ def case_files(args):
 
     for case in gdc_paginate(CASES, params=params, legacy=args.legacy):
         case_id = case['case_id']
+        print case_id
         for file in case['files']:
             if file['data_type'] == args.type:
                 entry = select_keys(file, ['file_id', 'file_name'])
