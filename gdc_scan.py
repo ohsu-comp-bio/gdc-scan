@@ -148,6 +148,8 @@ CASE_FILE_FIELDS = [
     'files.file_name',
     'files.submitter_id',
     'files.type',
+    'project.project_id',
+    'project.program.name'
     'case_id'
 ]
         
@@ -166,18 +168,20 @@ def case_files(args):
     tree = {}
     params = {
         # 'size': 1,
-        'expand': ['files','samples'],
+        'expand': ['files', 'samples'],
         'fields': CASE_FILE_FIELDS
     }
 
     for case in gdc_paginate(CASES, params=params, legacy=args.legacy):
-        case_id = case['case_id']
-        print case_id
+        project_id = case['project']['project_id']
+        print project_id
+        # case_id = case['case_id']
+        # print case_id
         for file in case['files']:
             if file['data_type'] == args.type:
                 entry = select_keys(file, ['file_id', 'file_name'])
                 entry['samples'] = file['cases'][0]['samples']
-                entry['case_id'] = case_id
+                entry['project_id'] = project_id
                 tree[entry['file_name']] = entry
 
     return tree
